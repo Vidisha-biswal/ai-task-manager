@@ -1,5 +1,8 @@
 const mongoose=require('mongoose');
+const dns = require("dns"); // 1. Import the native DNS module
 
+// 2. Force Node to use Google and Cloudflare public DNS resolvers
+dns.setServers(["8.8.8.8", "1.1.1.1"]); 
 const connectDB=async()=>{
     try{
         await mongoose.connect(process.env.MONGO_URI);

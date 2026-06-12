@@ -49,12 +49,12 @@ const loginUser= async(req,res)=>{
             email
         });
 
-        if(user && await bcrypt.conpare(password, user.password)){
+        if(user && await bcrypt.compare(password, user.password)){
             return res.json({
                 _id: user._id,
                 name:user.name,
                 email:user.email,
-                token:generateToken(user_.id)
+                token:generateToken(user._id)
             });
         }
     }catch(error){
