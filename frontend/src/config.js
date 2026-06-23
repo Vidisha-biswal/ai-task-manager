@@ -1,1 +1,1 @@
-export const BASE_URL ="https://ai-task-manager-ekay.onrender.com/";
+export const BASE_URL ="https://ai-task-manager-ekay.onrender.com";
