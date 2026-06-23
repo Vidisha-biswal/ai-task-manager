@@ -22,7 +22,7 @@ function Register() {
 
             if (res && res.data && res.data.token) {
                 localStorage.setItem("token", res.data.token);
-                navigate("/dashboard"); 
+                navigate("/login");
             }
         } catch (error) {
             const backendError = error.response?.data?.message || "Registration Failed!";
@@ -73,7 +73,6 @@ function Register() {
                     <button type="submit" style={styles.button}>Register</button>
                 </form>
 
-                {/* 🧠 FUNCTIONAL LINK ROUTING CONTAINER */}
                 <p style={styles.footerText}>
                     Already a user? <Link to="/login" style={styles.link}>Login here</Link>
                 </p>
