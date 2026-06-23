@@ -1,7 +1,8 @@
 import axios from "axios";
 
-const API="http://localhost:5000/api/tasks";
-
+import { BASE_URL } from "../config";
+const API =
+ `${BASE_URL}/api/tasks`;
 const getToken=()=>
     localStorage.getItem("token");
 
@@ -12,10 +13,16 @@ const headers=()=>({
     }
 });
 
+export const createTask = (taskData) => {
+    return axios.post(API, taskData, headers());
+};
 export const getTasks=()=>{
-    axios.get(API,headers());
+    return axios.get(API,headers());
 }
+export const updateTask = (id, taskData) => {
+    return axios.put(`${API}/${id}`, taskData, headers());
+};
 
 export const deleteTask=(id)=>{
-    axios.delete(`${API}/${id}`,headers());
+    return axios.delete(`${API}/${id}`,headers());
 }

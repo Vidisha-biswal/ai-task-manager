@@ -1,73 +1,73 @@
-const User=require('../models/User');
-const bcrypt=require('bcryptjs');
-const generateToken=require('../utils/generateToken');
+ 
+const User = require('../models/User');
+const bcrypt = require('bcryptjs');
+const generateToken = require('../utils/generateToken');
 
-const registerUser= async(req,res)=>{
-    try{
-        const{name, email, password}= req.body;
+const registerUser = async (req, res) => {
+    try {
+        const { name, email, password } = req.body;
 
-        const userExists=await User.findOne({
-            email
-        });
+        const userExists = await User.findOne({ email });
 
-        if(userExists){
+        if (userExists) {
             return res.status(400).json({
-                message:"User already exists"
+                message: "User already exists"
             });
         }
 
-        const salt=await bcrypt.genSalt(10);
-        const hashesPasswod= await bcrypt.hash(
-            password,
-            salt
-        );
+        const salt = await bcrypt.genSalt(10);
+        const hashesPasswod = await bcrypt.hash(password, salt);
 
-        const user= await User.create({
+        const user = await User.create({
             name,
             email,
             password: hashesPasswod
         });
 
-        res.status(201).json({
+        return res.status(201).json({
             _id: user._id,
-            name:user.name,
-            email:user.email,
-            token:generateToken(user._id)
+            name: user.name,
+            email: user.email,
+            token: generateToken(user._id)
         });
-    }catch(error){
-        res.status(500).json({
-            message:"Server error: "+error.message
+    } catch (error) {
+        return res.status(500).json({
+            message: "Server error: " + error.message
         });
     }
 };
 
-const loginUser= async(req,res)=>{
-    try{
-        const {email, password}= req.body;
+const loginUser = async (req, res) => {
+    try {
+        const { email, password } = req.body;
 
-        const user= await User.findOne({
-            email
-        });
+        const user = await User.findOne({ email });
 
-        if(user && await bcrypt.compare(password, user.password)){
+        if (user && await bcrypt.compare(password, user.password)) {
             return res.json({
                 _id: user._id,
-                name:user.name,
-                email:user.email,
-                token:generateToken(user._id)
+                name: user.name,
+                email: user.email,
+                token: generateToken(user._id)
             });
         }
-    }catch(error){
-        res.status(500).json({
-            message:"Invalid credentials"
+
+         return res.status(401).json({
+            message: "Invalid email or password"
+        });
+
+    } catch (error) {
+         return res.status(500).json({
+            message: "Server internal error: " + error.message
         });
     }
 }
 
-const getProfile= async(req,res)=>{
+const getProfile = async (req, res) => {
     res.status(200).json(req.user);
 };
-module.exports={
+
+module.exports = {
     registerUser,
     loginUser,
     getProfile 
