@@ -2,7 +2,7 @@ import axios from "axios";
 
 import { BASE_URL } from "../config";
 const API =
- `${BASE_URL}/api/tasks`;
+ `${BASE_URL}/api/auth`;
 
 export const loginUser=(data)=>{
     return axios.post(`${API}/login`,data);
