@@ -59,32 +59,69 @@ const getTaskById= async(req,res)=>{
     }
 }
 
-const updateTask= async(req,res)=>{
-    try{
-        const task= await Task.findOne({
-            _id:req.params.id,
-            user:req.user._id
-        });
+const updateTask = async (req, res) => {
+  try {
 
-        if(!task){
-            return res.status(404).json({
-                message:"Task not found"
-            });
-        }
+    const task = await Task.findOne({
+      _id: req.params.id,
+      user: req.user._id
+    });
 
-        const updatedTask= await Task.findByIdAndUpdate(
-            req.params.id,
-            req.body,{
-                new:true
-            }
-        );
-        res.json(updatedTask);
-    }catch(error){
-        res.status(500).json({
-            message:"Server error: "+error.message
-        });
+    if (!task) {
+      return res.status(404).json({
+        message: "Task not found"
+      });
     }
-}
+
+    const {
+      title,
+      description,
+      priority,
+      dueDate,
+      status
+    } = req.body;
+
+    if (title !== undefined) {
+      task.title = title;
+    }
+
+    if (description !== undefined) {
+      task.description = description;
+    }
+
+    if (priority !== undefined) {
+      task.priority = priority;
+    }
+
+    if (dueDate !== undefined) {
+      task.dueDate = dueDate;
+    }
+
+    if (status !== undefined) {
+
+      task.status = status;
+
+      if (status === "completed") {
+        task.completedAt = new Date();
+      }
+
+      if (status !== "completed") {
+        task.completedAt = null;
+      }
+    }
+
+    const updatedTask = await task.save();
+
+    res.json(updatedTask);
+
+  } catch (error) {
+
+    res.status(500).json({
+      message: "Server error: " + error.message
+    });
+
+  }
+};
 
 const deleteTask= async(req,res)=>{
     try{
