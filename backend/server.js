@@ -13,7 +13,7 @@ app.use(
   cors({
     origin: [
       "http://localhost:5173",
-      "https://ai-task-manager-iv8k3eh30-work-lab.vercel.app"
+      "https://ai-task-manager-lemon-five.vercel.app"
     ]
   })
 );
