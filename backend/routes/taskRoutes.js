@@ -1,24 +1,135 @@
-const express=require("express");
-const router=express.Router();
-const {body}=require("express-validator");
+const express = require("express");
+const { body } = require("express-validator");
+
 const {
-    createTask, 
-    getTasks, 
-    getTaskById, 
-    updateTask,
-    deleteTask
-}=require("../controllers/taskController");
+  createTask,
+  getTasks,
+  getTaskById,
+  updateTask,
+  deleteTask
+} = require("../controllers/taskController");
 
-const {protect}=require("../middleware/authMiddleware");
+const { protect } =
+  require("../middleware/authMiddleware");
 
-router.post("/",protect,[
+const router = express.Router();
+
+
+/*
+ * CREATE TASK
+ */
+
+router.post(
+  "/",
+  protect,
+  [
     body("title")
-    .notEmpty()
-    .withMessage("Title is required")
-],createTask);
-router.get("/",protect,getTasks);
-router.get("/:id",protect,getTaskById);
-router.put("/:id",protect,updateTask);
-router.delete("/:id",protect,deleteTask);
+      .trim()
+      .notEmpty()
+      .withMessage("Title is required"),
 
-module.exports=router;
+    body("priority")
+      .optional()
+      .isIn([
+        "low",
+        "medium",
+        "high"
+      ])
+      .withMessage(
+        "Priority must be low, medium, or high"
+      ),
+
+    body("dueDate")
+      .optional({ nullable: true })
+      .isISO8601()
+      .withMessage(
+        "Due date must be a valid date"
+      )
+  ],
+  createTask
+);
+
+
+/*
+ * GET ALL TASKS
+ */
+
+router.get(
+  "/",
+  protect,
+  getTasks
+);
+
+
+/*
+ * GET SINGLE TASK
+ */
+
+router.get(
+  "/:id",
+  protect,
+  getTaskById
+);
+
+
+/*
+ * UPDATE TASK
+ */
+
+router.put(
+  "/:id",
+  protect,
+  [
+    body("title")
+      .optional()
+      .trim()
+      .notEmpty()
+      .withMessage(
+        "Title cannot be empty"
+      ),
+
+    body("priority")
+      .optional()
+      .isIn([
+        "low",
+        "medium",
+        "high"
+      ])
+      .withMessage(
+        "Priority must be low, medium, or high"
+      ),
+
+    body("status")
+      .optional()
+      .isIn([
+        "pending",
+        "in-progress",
+        "completed"
+      ])
+      .withMessage(
+        "Invalid task status"
+      ),
+
+    body("dueDate")
+      .optional({ nullable: true })
+      .isISO8601()
+      .withMessage(
+        "Due date must be a valid date"
+      )
+  ],
+  updateTask
+);
+
+
+/*
+ * DELETE TASK
+ */
+
+router.delete(
+  "/:id",
+  protect,
+  deleteTask
+);
+
+
+module.exports = router;

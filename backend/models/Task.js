@@ -5,7 +5,8 @@ const taskSchema = new mongoose.Schema(
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true
+      required: true,
+      index: true
     },
 
     title: {
@@ -16,12 +17,17 @@ const taskSchema = new mongoose.Schema(
 
     description: {
       type: String,
-      default: ""
+      default: "",
+      trim: true
     },
 
     priority: {
       type: String,
-      enum: ["low", "medium", "high"],
+      enum: [
+        "low",
+        "medium",
+        "high"
+      ],
       default: "medium"
     },
 
@@ -36,11 +42,13 @@ const taskSchema = new mongoose.Schema(
     },
 
     dueDate: {
-      type: Date
+      type: Date,
+      default: null
     },
 
     completedAt: {
-      type: Date
+      type: Date,
+      default: null
     }
   },
   {
@@ -48,7 +56,12 @@ const taskSchema = new mongoose.Schema(
   }
 );
 
-module.exports = mongoose.model(
-  "Task",
-  taskSchema
-);
+
+taskSchema.index({
+  user: 1,
+  createdAt: -1
+});
+
+
+module.exports =
+  mongoose.model("Task", taskSchema);

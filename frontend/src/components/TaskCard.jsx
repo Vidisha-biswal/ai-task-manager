@@ -6,6 +6,7 @@ import {
   Circle
 } from "lucide-react";
 
+
 function TaskCard({
   task,
   onDelete,
@@ -14,7 +15,8 @@ function TaskCard({
 
   const priority =
     task.priority?.toLowerCase() ||
-    "low";
+    "medium";
+
 
   const priorityConfig = {
 
@@ -22,31 +24,29 @@ function TaskCard({
       label: "High",
       className:
         "border-red-500/20 bg-red-500/10 text-red-400",
-      dot:
-        "bg-red-400"
+      dot: "bg-red-400"
     },
 
     medium: {
       label: "Medium",
       className:
         "border-yellow-500/20 bg-yellow-500/10 text-yellow-400",
-      dot:
-        "bg-yellow-400"
+      dot: "bg-yellow-400"
     },
 
     low: {
       label: "Low",
       className:
         "border-emerald-500/20 bg-emerald-500/10 text-emerald-400",
-      dot:
-        "bg-emerald-400"
+      dot: "bg-emerald-400"
     }
 
   };
 
+
   const priorityStyle =
     priorityConfig[priority] ||
-    priorityConfig.low;
+    priorityConfig.medium;
 
 
   const status =
@@ -73,9 +73,14 @@ function TaskCard({
       return "No deadline";
     }
 
-    return new Date(
-      task.dueDate
-    ).toLocaleDateString(
+    const date =
+      new Date(task.dueDate);
+
+    if (Number.isNaN(date.getTime())) {
+      return "Invalid deadline";
+    }
+
+    return date.toLocaleDateString(
       "en-US",
       {
         month: "short",
@@ -83,7 +88,6 @@ function TaskCard({
         year: "numeric"
       }
     );
-
   };
 
 
@@ -139,11 +143,15 @@ function TaskCard({
 
       {/* DESCRIPTION */}
 
-      <p className="mt-3 line-clamp-3 flex-1 text-sm leading-6 text-slate-500">
-
+      <p
+        className={`mt-3 line-clamp-3 flex-1 text-sm leading-6 ${
+          isCompleted
+            ? "text-slate-600"
+            : "text-slate-500"
+        }`}
+      >
         {task.description ||
           "No description provided."}
-
       </p>
 
 
@@ -168,12 +176,13 @@ function TaskCard({
 
         <div className="relative flex flex-1 items-center">
 
-          <span className="absolute left-3 pointer-events-none text-slate-500">
+          <span className="pointer-events-none absolute left-3 text-slate-500">
 
             {statusIcon[status] ||
               <Circle size={15} />}
 
           </span>
+
 
           <select
             value={status}
@@ -206,11 +215,13 @@ function TaskCard({
         {/* DELETE */}
 
         <button
+          type="button"
           onClick={() =>
             onDelete(task._id)
           }
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-800 text-slate-500 transition hover:border-red-500/30 hover:bg-red-500/10 hover:text-red-400"
           title="Delete task"
+          aria-label={`Delete ${task.title}`}
         >
 
           <Trash2 size={15} />
@@ -220,8 +231,8 @@ function TaskCard({
       </div>
 
     </div>
-
   );
 }
+
 
 export default TaskCard;

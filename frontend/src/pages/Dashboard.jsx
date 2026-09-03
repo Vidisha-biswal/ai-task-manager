@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+
 import {
   CheckCircle2,
   Clock3,
@@ -10,6 +11,7 @@ import {
 
 import {
   getTasks,
+  createTask,
   deleteTask,
   updateTask
 } from "../api/taskApi";
@@ -17,39 +19,111 @@ import {
 import Sidebar from "../components/Sidebar";
 import TaskList from "../components/TaskList";
 import TaskForm from "../components/TaskForm";
-
+import DashboardHeader from "../components/DashboardHeader";
 function Dashboard() {
 
   const [tasks, setTasks] = useState([]);
-  const [showTaskForm, setShowTaskForm] = useState(false);
-  const [loading, setLoading] = useState(true);
+
+  const [showTaskForm, setShowTaskForm] =
+    useState(false);
+
+  const [loading, setLoading] =
+    useState(true);
+
 
   /*
    * LOAD TASKS
+   */
+
+  const loadTasks = async () => {
+
+    try {
+
+      setLoading(true);
+
+      const response = await getTasks();
+
+      console.log(
+        "TASK API RESPONSE:",
+        response.data
+      );
+
+      const loadedTasks =
+        Array.isArray(response.data)
+          ? response.data
+          : Array.isArray(response.data?.tasks)
+          ? response.data.tasks
+          : [];
+
+      setTasks(loadedTasks);
+
+    } catch (error) {
+
+      console.error(
+        "Failed to fetch tasks:",
+        error
+      );
+
+      setTasks([]);
+
+    } finally {
+
+      setLoading(false);
+
+    }
+
+  };
+
+
+  /*
+   * INITIAL LOAD
    */
 
   useEffect(() => {
 
     let ignore = false;
 
-    const loadTasks = async () => {
+    const fetchInitialTasks = async () => {
 
       try {
 
         setLoading(true);
 
-        const response = await getTasks();
+        const response =
+          await getTasks();
 
-        if (!ignore) {
-          setTasks(response.data);
+        if (ignore) {
+          return;
         }
+
+        console.log(
+          "INITIAL TASK API RESPONSE:",
+          response.data
+        );
+
+        const loadedTasks =
+          Array.isArray(response.data)
+            ? response.data
+            : Array.isArray(
+                response.data?.tasks
+              )
+            ? response.data.tasks
+            : [];
+
+        setTasks(loadedTasks);
 
       } catch (error) {
 
-        console.error(
-          "Failed to fetch tasks:",
-          error
-        );
+        if (!ignore) {
+
+          console.error(
+            "Failed to fetch tasks:",
+            error
+          );
+
+          setTasks([]);
+
+        }
 
       } finally {
 
@@ -61,13 +135,72 @@ function Dashboard() {
 
     };
 
-    loadTasks();
+    fetchInitialTasks();
 
     return () => {
       ignore = true;
     };
 
   }, []);
+
+
+  /*
+   * CREATE TASK
+   *
+   * TaskForm sends:
+   * {
+   *   title,
+   *   description,
+   *   priority,
+   *   dueDate
+   * }
+   *
+   * The API saves the task and
+   * returns the created task.
+   */
+
+  const handleAddTask = async (
+    taskData
+  ) => {
+
+    try {
+
+      console.log(
+        "CREATE TASK REQUEST:",
+        taskData
+      );
+
+      const response =
+        await createTask(taskData);
+
+      console.log(
+        "CREATE TASK RESPONSE:",
+        response.data
+      );
+
+      const newTask = response.data;
+
+      setTasks((currentTasks) => [
+        newTask,
+        ...currentTasks
+      ]);
+
+      setShowTaskForm(false);
+
+      return newTask;
+
+    } catch (error) {
+
+      console.error(
+        "Failed to create task:",
+        error
+      );
+
+      throw error;
+
+    }
+
+  };
 
 
   /*
@@ -93,7 +226,10 @@ function Dashboard() {
         error
       );
 
-      alert("Unable to delete task.");
+      alert(
+        error.response?.data?.message ||
+        "Unable to delete task."
+      );
 
     }
 
@@ -117,6 +253,11 @@ function Dashboard() {
           { status }
         );
 
+      console.log(
+        "UPDATED TASK:",
+        response.data
+      );
+
       setTasks((currentTasks) =>
         currentTasks.map((task) =>
           task._id === id
@@ -133,32 +274,11 @@ function Dashboard() {
       );
 
       alert(
+        error.response?.data?.message ||
         "Unable to update task status."
       );
 
     }
-
-  };
-
-
-  /*
-   * AFTER TASK CREATION
-   */
-
-  const handleTaskCreated = (
-    newTask
-  ) => {
-
-    if (newTask) {
-
-      setTasks((currentTasks) => [
-        newTask,
-        ...currentTasks
-      ]);
-
-    }
-
-    setShowTaskForm(false);
 
   };
 
@@ -180,8 +300,7 @@ function Dashboard() {
     const inProgress =
       tasks.filter(
         (task) =>
-          task.status === "in-progress" ||
-          task.status === "in_progress"
+          task.status === "in-progress"
       ).length;
 
     const pending =
@@ -271,8 +390,9 @@ function Dashboard() {
       <main className="ml-60 min-h-screen p-8">
 
         {/* HEADER */}
+        <DashboardHeader />
 
-        <div className="mb-8 flex items-center justify-between">
+        {/* <div className="mb-8 flex items-center justify-between">
 
           <div>
 
@@ -305,56 +425,48 @@ function Dashboard() {
 
           </button>
 
-        </div>
+        </div> */}
 
 
         {/* STATISTICS */}
 
         <section className="mb-8 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
 
-          {/* TOTAL */}
-
           <StatCard
             title="Total Tasks"
             value={analytics.total}
-            icon={<ListTodo size={21} />}
+            icon={
+              <ListTodo size={21} />
+            }
             description="All your tasks"
           />
 
-
-          {/* COMPLETED */}
 
           <StatCard
             title="Completed"
             value={analytics.completed}
             icon={
-              <CheckCircle2
-                size={21}
-              />
+              <CheckCircle2 size={21} />
             }
             description={`${analytics.completionRate}% completion rate`}
           />
 
 
-          {/* IN PROGRESS */}
-
           <StatCard
             title="In Progress"
             value={analytics.inProgress}
-            icon={<Clock3 size={21} />}
+            icon={
+              <Clock3 size={21} />
+            }
             description="Currently working"
           />
 
-
-          {/* HIGH PRIORITY */}
 
           <StatCard
             title="High Priority"
             value={analytics.highPriority}
             icon={
-              <AlertCircle
-                size={21}
-              />
+              <AlertCircle size={21} />
             }
             description="Needs attention"
           />
@@ -537,8 +649,6 @@ function Dashboard() {
           </div>
 
 
-          {/* LOADING */}
-
           {loading ? (
 
             <div className="py-12 text-center">
@@ -588,6 +698,7 @@ function Dashboard() {
                 AI Productivity Insight
               </h3>
 
+
               <p className="mt-2 text-sm leading-6 text-slate-400">
 
                 {analytics.total === 0
@@ -617,8 +728,8 @@ function Dashboard() {
           onClose={() =>
             setShowTaskForm(false)
           }
-          onTaskCreated={
-            handleTaskCreated
+          onAddTask={
+            handleAddTask
           }
         />
 
@@ -627,6 +738,7 @@ function Dashboard() {
     </div>
 
   );
+
 }
 
 

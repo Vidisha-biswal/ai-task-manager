@@ -9,15 +9,14 @@ const { errorHandler } = require("./middleware/errorMiddleware");
 const app = express();
 
 connectDB();
-app.use(cors());
-// app.use(
-//   cors({
-//     origin: [
-//       "http://localhost:5173",
-//       "https://ai-task-manager-iv8k3eh30-work-lab.vercel.app"
-//     ]
-//   })
-// );
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "https://ai-task-manager-iv8k3eh30-work-lab.vercel.app"
+    ]
+  })
+);
 
 app.use(express.json());
 

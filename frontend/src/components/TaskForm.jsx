@@ -10,33 +10,28 @@ function TaskForm({
   onAddTask,
   onClose
 }) {
-
-  const [title, setTitle] =
-    useState("");
-
-  const [description, setDescription] =
-    useState("");
-
-  const [dueDate, setDueDate] =
-    useState("");
-
-  const [isLoading, setIsLoading] =
-    useState(false);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [dueDate, setDueDate] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e) => {
-
     e.preventDefault();
 
-    if (!title.trim()) return;
+    const trimmedTitle = title.trim();
+    const trimmedDescription = description.trim();
+
+    if (!trimmedTitle) {
+      return;
+    }
 
     try {
-
       setIsLoading(true);
 
       await onAddTask({
-        title,
-        description,
-        dueDate
+        title: trimmedTitle,
+        description: trimmedDescription,
+        dueDate: dueDate || null
       });
 
       setTitle("");
@@ -44,21 +39,16 @@ function TaskForm({
       setDueDate("");
 
     } catch (error) {
-
       console.error(
         "Failed to create task:",
         error
       );
-
     } finally {
-
       setIsLoading(false);
-
     }
   };
 
   return (
-
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
 
       <div className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl">
@@ -85,22 +75,21 @@ function TaskForm({
               </h2>
 
               <p className="text-xs text-slate-500">
-                AI will automatically analyze your task priority.
+                AI will analyze your task and assign its priority.
               </p>
 
             </div>
 
           </div>
 
-
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-800 hover:text-white"
+            disabled={isLoading}
+            className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-800 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+            aria-label="Close task form"
           >
-
             <X size={19} />
-
           </button>
 
         </div>
@@ -117,18 +106,23 @@ function TaskForm({
 
           <div>
 
-            <label className="mb-2 block text-sm font-medium text-slate-300">
+            <label
+              htmlFor="task-title"
+              className="mb-2 block text-sm font-medium text-slate-300"
+            >
               Task Title
             </label>
 
             <input
+              id="task-title"
               type="text"
               placeholder="e.g. Prepare for Microsoft interview"
               value={title}
               onChange={(e) =>
                 setTitle(e.target.value)
               }
-              className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
+              disabled={isLoading}
+              className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 disabled:cursor-not-allowed disabled:opacity-60"
               required
             />
 
@@ -141,7 +135,10 @@ function TaskForm({
 
             <div className="mb-2 flex items-center justify-between">
 
-              <label className="text-sm font-medium text-slate-300">
+              <label
+                htmlFor="task-description"
+                className="text-sm font-medium text-slate-300"
+              >
                 Description
               </label>
 
@@ -152,15 +149,15 @@ function TaskForm({
             </div>
 
             <textarea
+              id="task-description"
               placeholder="Add details, requirements or context..."
               value={description}
               onChange={(e) =>
-                setDescription(
-                  e.target.value
-                )
+                setDescription(e.target.value)
               }
+              disabled={isLoading}
               rows={4}
-              className="w-full resize-none rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
+              className="w-full resize-none rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 disabled:cursor-not-allowed disabled:opacity-60"
             />
 
           </div>
@@ -170,7 +167,10 @@ function TaskForm({
 
           <div>
 
-            <label className="mb-2 block text-sm font-medium text-slate-300">
+            <label
+              htmlFor="task-due-date"
+              className="mb-2 block text-sm font-medium text-slate-300"
+            >
               Target Deadline
             </label>
 
@@ -182,14 +182,14 @@ function TaskForm({
               />
 
               <input
+                id="task-due-date"
                 type="date"
                 value={dueDate}
                 onChange={(e) =>
-                  setDueDate(
-                    e.target.value
-                  )
+                  setDueDate(e.target.value)
                 }
-                className="w-full rounded-xl border border-slate-700 bg-slate-950 py-3 pl-11 pr-4 text-sm text-white outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
+                disabled={isLoading}
+                className="w-full rounded-xl border border-slate-700 bg-slate-950 py-3 pl-11 pr-4 text-sm text-white outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 disabled:cursor-not-allowed disabled:opacity-60"
               />
 
             </div>
@@ -215,7 +215,9 @@ function TaskForm({
                 </p>
 
                 <p className="mt-1 text-xs leading-5 text-slate-500">
-                  Gemini will analyze your task and automatically assign a priority level based on urgency and context.
+                  Gemini will analyze the task title, description,
+                  and deadline to determine whether the task is
+                  High, Medium, or Low priority.
                 </p>
 
               </div>
@@ -232,14 +234,15 @@ function TaskForm({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-xl border border-slate-700 px-5 py-2.5 text-sm font-medium text-slate-300 transition hover:bg-slate-800 hover:text-white"
+              disabled={isLoading}
+              className="rounded-xl border border-slate-700 px-5 py-2.5 text-sm font-medium text-slate-300 transition hover:bg-slate-800 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
             >
               Cancel
             </button>
 
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isLoading || !title.trim()}
               className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-violet-900/20 transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
             >
 

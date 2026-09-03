@@ -6,7 +6,10 @@ import {
   Plus
 } from "lucide-react";
 
-import { useNavigate, useLocation } from "react-router-dom";
+import {
+  useNavigate,
+  useLocation
+} from "react-router-dom";
 
 function Sidebar({ onCreateTask }) {
   const navigate = useNavigate();
@@ -48,55 +51,55 @@ function Sidebar({ onCreateTask }) {
     navigate(item.path);
   };
 
+  const handleCreateTask = () => {
+    if (onCreateTask) {
+      onCreateTask();
+      return;
+    }
+
+    navigate("/dashboard");
+  };
+
   return (
     <aside className="fixed left-0 top-0 z-40 hidden h-screen w-60 border-r border-slate-800 bg-slate-950 lg:block">
 
-      {/* LOGO */}
+      {/* ================= LOGO ================= */}
 
       <div className="flex h-[74px] items-center border-b border-slate-800 px-6">
 
-        <div className="flex items-center gap-2">
+        <button
+          onClick={() => navigate("/dashboard")}
+          className="flex items-center gap-2"
+        >
+          <Sparkles
+            size={25}
+            className="text-violet-400"
+          />
 
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-blue-600">
-
-            <Sparkles
-              size={19}
-              className="text-white"
-            />
-
-          </div>
-
-          <span className="text-lg font-bold tracking-tight text-white">
+          <span className="text-lg font-bold text-white">
             AI Task Manager
           </span>
-
-        </div>
+        </button>
 
       </div>
 
-
-      {/* NAVIGATION */}
+      {/* ================= NAVIGATION ================= */}
 
       <nav className="space-y-2 p-4">
 
         {menuItems.map((item) => {
-
           const Icon = item.icon;
 
           const active =
-            item.label === "Dashboard"
-              ? location.pathname === "/dashboard"
-              : item.label === "Planner"
-                ? location.pathname === "/planner"
-                : false;
+            (item.label === "Dashboard" &&
+              location.pathname === "/dashboard") ||
+            (item.label === "Planner" &&
+              location.pathname === "/planner");
 
           return (
-
             <button
               key={item.label}
-              onClick={() =>
-                handleNavigation(item)
-              }
+              onClick={() => handleNavigation(item)}
               className={`group flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200 ${
                 active
                   ? "bg-gradient-to-r from-blue-600 to-violet-600 text-white shadow-lg shadow-violet-900/20"
@@ -116,15 +119,12 @@ function Sidebar({ onCreateTask }) {
               {item.label}
 
             </button>
-
           );
-
         })}
 
       </nav>
 
-
-      {/* AI ASSISTANT */}
+      {/* ================= AI ASSISTANT ================= */}
 
       <div className="absolute bottom-20 left-4 right-4 rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-950/50 to-blue-950/40 p-4">
 
@@ -143,7 +143,7 @@ function Sidebar({ onCreateTask }) {
         </p>
 
         <button
-          onClick={onCreateTask}
+          onClick={handleCreateTask}
           className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-blue-600 py-2.5 text-sm font-semibold text-white shadow-lg shadow-violet-900/20 transition hover:-translate-y-0.5 hover:opacity-90"
         >
 
@@ -155,8 +155,7 @@ function Sidebar({ onCreateTask }) {
 
       </div>
 
-
-      {/* USER */}
+      {/* ================= USER ================= */}
 
       <div className="absolute bottom-0 left-0 right-0 border-t border-slate-800 p-4">
 

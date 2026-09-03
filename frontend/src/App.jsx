@@ -1,5 +1,4 @@
 import {
-  BrowserRouter,
   Routes,
   Route
 } from "react-router-dom";
@@ -8,46 +7,60 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import DailyPlanner from "./pages/DailyPlanner";
+
 import ProtectedRoute from "./components/ProtectedRoute";
 
+
 function App() {
+
   return (
-    <BrowserRouter>
 
-      <Routes>
+    <Routes>
 
-        <Route
-          path="/"
-          element={<Login />}
-        />
+      <Route
+        path="/"
+        element={
+          <Login />
+        }
+      />
 
-        <Route
-          path="/register"
-          element={<Register />}
-        />
+      <Route
+        path="/login"
+        element={
+          <Login />
+        }
+      />
 
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          }
-        />
+      <Route
+        path="/register"
+        element={
+          <Register />
+        }
+      />
 
-        <Route
-          path="/planner"
-          element={
-            <ProtectedRoute>
-              <DailyPlanner />
-            </ProtectedRoute>
-          }
-        />
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        }
+      />
 
-      </Routes>
+      <Route
+        path="/planner"
+        element={
+          <ProtectedRoute>
+            <DailyPlanner />
+          </ProtectedRoute>
+        }
+      />
 
-    </BrowserRouter>
+    </Routes>
+
   );
+
 }
+
 
 export default App;
