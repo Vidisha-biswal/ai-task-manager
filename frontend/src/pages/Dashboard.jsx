@@ -392,41 +392,6 @@ function Dashboard() {
         {/* HEADER */}
         <DashboardHeader />
 
-        {/* <div className="mb-8 flex items-center justify-between">
-
-          <div>
-
-            <p className="mb-1 text-sm text-slate-400">
-              Welcome back 👋
-            </p>
-
-            <h1 className="text-3xl font-bold">
-              Good morning, Vidisha
-            </h1>
-
-            <p className="mt-2 text-sm text-slate-400">
-              Here's what's happening with
-              your tasks today.
-            </p>
-
-          </div>
-
-
-          <button
-            onClick={() =>
-              setShowTaskForm(true)
-            }
-            className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-violet-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-violet-900/20 transition hover:opacity-90"
-          >
-
-            <Sparkles size={17} />
-
-            Create Smart Task
-
-          </button>
-
-        </div> */}
-
 
         {/* STATISTICS */}
 

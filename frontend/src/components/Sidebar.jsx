@@ -11,9 +11,45 @@ import {
   useLocation
 } from "react-router-dom";
 
+import { useAuth } from "../context/AuthContext";
+
+
+function getInitials(name) {
+  if (!name) {
+    return "U";
+  }
+
+  const parts = name
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+
+  if (parts.length === 1) {
+    return parts[0]
+      .charAt(0)
+      .toUpperCase();
+  }
+
+  return (
+    parts[0].charAt(0) +
+    parts[parts.length - 1].charAt(0)
+  ).toUpperCase();
+}
+
+
 function Sidebar({ onCreateTask }) {
   const navigate = useNavigate();
   const location = useLocation();
+
+  const { user } = useAuth();
+
+
+  const userName =
+    user?.name || "User";
+
+  const initials =
+    getInitials(user?.name);
+
 
   const menuItems = [
     {
@@ -33,6 +69,7 @@ function Sidebar({ onCreateTask }) {
     }
   ];
 
+
   const handleNavigation = (item) => {
     if (item.path.includes("#")) {
       navigate("/dashboard");
@@ -51,6 +88,7 @@ function Sidebar({ onCreateTask }) {
     navigate(item.path);
   };
 
+
   const handleCreateTask = () => {
     if (onCreateTask) {
       onCreateTask();
@@ -60,6 +98,7 @@ function Sidebar({ onCreateTask }) {
     navigate("/dashboard");
   };
 
+
   return (
     <aside className="fixed left-0 top-0 z-40 hidden h-screen w-60 border-r border-slate-800 bg-slate-950 lg:block">
 
@@ -68,9 +107,12 @@ function Sidebar({ onCreateTask }) {
       <div className="flex h-[74px] items-center border-b border-slate-800 px-6">
 
         <button
-          onClick={() => navigate("/dashboard")}
+          onClick={() =>
+            navigate("/dashboard")
+          }
           className="flex items-center gap-2"
         >
+
           <Sparkles
             size={25}
             className="text-violet-400"
@@ -79,9 +121,11 @@ function Sidebar({ onCreateTask }) {
           <span className="text-lg font-bold text-white">
             AI Task Manager
           </span>
+
         </button>
 
       </div>
+
 
       {/* ================= NAVIGATION ================= */}
 
@@ -92,14 +136,18 @@ function Sidebar({ onCreateTask }) {
 
           const active =
             (item.label === "Dashboard" &&
-              location.pathname === "/dashboard") ||
+              location.pathname ===
+                "/dashboard") ||
             (item.label === "Planner" &&
-              location.pathname === "/planner");
+              location.pathname ===
+                "/planner");
 
           return (
             <button
               key={item.label}
-              onClick={() => handleNavigation(item)}
+              onClick={() =>
+                handleNavigation(item)
+              }
               className={`group flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200 ${
                 active
                   ? "bg-gradient-to-r from-blue-600 to-violet-600 text-white shadow-lg shadow-violet-900/20"
@@ -123,6 +171,7 @@ function Sidebar({ onCreateTask }) {
         })}
 
       </nav>
+
 
       {/* ================= AI ASSISTANT ================= */}
 
@@ -155,6 +204,7 @@ function Sidebar({ onCreateTask }) {
 
       </div>
 
+
       {/* ================= USER ================= */}
 
       <div className="absolute bottom-0 left-0 right-0 border-t border-slate-800 p-4">
@@ -162,17 +212,16 @@ function Sidebar({ onCreateTask }) {
         <div className="flex items-center gap-3">
 
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-blue-500 text-sm font-bold text-white">
-            VB
+
+            {initials}
+
           </div>
+
 
           <div className="min-w-0">
 
             <p className="truncate text-sm font-semibold text-white">
-              Vidisha Biswal
-            </p>
-
-            <p className="text-xs text-slate-500">
-              Software Engineer
+              {userName}
             </p>
 
           </div>
@@ -184,5 +233,6 @@ function Sidebar({ onCreateTask }) {
     </aside>
   );
 }
+
 
 export default Sidebar;
