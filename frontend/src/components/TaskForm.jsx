@@ -1,4 +1,5 @@
 import { useState } from "react";
+
 import {
   Sparkles,
   X,
@@ -6,20 +7,32 @@ import {
   Check
 } from "lucide-react";
 
+import { generatePriority } from "../api/aiApi";
+
 function TaskForm({
   onAddTask,
   onClose
 }) {
   const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [dueDate, setDueDate] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [description, setDescription] =
+    useState("");
+  const [dueDate, setDueDate] =
+    useState("");
+
+  const [isLoading, setIsLoading] =
+    useState(false);
+
+  const [errorMessage, setErrorMessage] =
+    useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const trimmedTitle = title.trim();
-    const trimmedDescription = description.trim();
+    const trimmedTitle =
+      title.trim();
+
+    const trimmedDescription =
+      description.trim();
 
     if (!trimmedTitle) {
       return;
@@ -27,22 +40,115 @@ function TaskForm({
 
     try {
       setIsLoading(true);
+      setErrorMessage("");
+
+      /*
+       * -------------------------------------------------------
+       * STEP 1
+       * Ask Gemini to analyze the task.
+       *
+       * IMPORTANT:
+       * aiController.js expects:
+       *
+       * {
+       *   task: {
+       *     title,
+       *     description,
+       *     dueDate
+       *   }
+       * }
+       * -------------------------------------------------------
+       */
+
+      const priorityResponse =
+        await generatePriority({
+          task: {
+            title: trimmedTitle,
+            description:
+              trimmedDescription,
+            dueDate:
+              dueDate || null
+          }
+        });
+
+      /*
+       * -------------------------------------------------------
+       * STEP 2
+       * Read AI-generated priority.
+       * -------------------------------------------------------
+       */
+
+      const priority =
+        priorityResponse.data?.priority
+          ?.toLowerCase();
+
+      const allowedPriorities = [
+        "low",
+        "medium",
+        "high"
+      ];
+
+      /*
+       * Do not create a task if
+       * the AI response is invalid.
+       */
+
+      if (
+        !allowedPriorities.includes(
+          priority
+        )
+      ) {
+        throw new Error(
+          "AI returned an invalid task priority."
+        );
+      }
+
+      /*
+       * -------------------------------------------------------
+       * STEP 3
+       * Send the AI-generated priority
+       * to Dashboard.
+       * -------------------------------------------------------
+       */
 
       await onAddTask({
         title: trimmedTitle,
-        description: trimmedDescription,
-        dueDate: dueDate || null
+
+        description:
+          trimmedDescription,
+
+        dueDate:
+          dueDate || null,
+
+        priority
       });
+
+      /*
+       * -------------------------------------------------------
+       * STEP 4
+       * Reset form after successful creation.
+       * -------------------------------------------------------
+       */
 
       setTitle("");
       setDescription("");
       setDueDate("");
+      setErrorMessage("");
 
     } catch (error) {
+
       console.error(
-        "Failed to create task:",
+        "Failed to create AI-prioritized task:",
         error
       );
+
+      const message =
+        error.response?.data?.message ||
+        error.message ||
+        "Unable to prioritize and create the task.";
+
+      setErrorMessage(message);
+
     } finally {
       setIsLoading(false);
     }
@@ -118,9 +224,13 @@ function TaskForm({
               type="text"
               placeholder="e.g. Prepare for Microsoft interview"
               value={title}
-              onChange={(e) =>
-                setTitle(e.target.value)
-              }
+              onChange={(e) => {
+                setTitle(e.target.value);
+
+                if (errorMessage) {
+                  setErrorMessage("");
+                }
+              }}
               disabled={isLoading}
               className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 disabled:cursor-not-allowed disabled:opacity-60"
               required
@@ -152,9 +262,13 @@ function TaskForm({
               id="task-description"
               placeholder="Add details, requirements or context..."
               value={description}
-              onChange={(e) =>
-                setDescription(e.target.value)
-              }
+              onChange={(e) => {
+                setDescription(e.target.value);
+
+                if (errorMessage) {
+                  setErrorMessage("");
+                }
+              }}
               disabled={isLoading}
               rows={4}
               className="w-full resize-none rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 disabled:cursor-not-allowed disabled:opacity-60"
@@ -185,9 +299,13 @@ function TaskForm({
                 id="task-due-date"
                 type="date"
                 value={dueDate}
-                onChange={(e) =>
-                  setDueDate(e.target.value)
-                }
+                onChange={(e) => {
+                  setDueDate(e.target.value);
+
+                  if (errorMessage) {
+                    setErrorMessage("");
+                  }
+                }}
                 disabled={isLoading}
                 className="w-full rounded-xl border border-slate-700 bg-slate-950 py-3 pl-11 pr-4 text-sm text-white outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 disabled:cursor-not-allowed disabled:opacity-60"
               />
@@ -215,9 +333,9 @@ function TaskForm({
                 </p>
 
                 <p className="mt-1 text-xs leading-5 text-slate-500">
-                  Gemini will analyze the task title, description,
-                  and deadline to determine whether the task is
-                  High, Medium, or Low priority.
+                  Gemini will analyze the task title,
+                  description, and deadline to determine
+                  whether the task is High, Medium, or Low priority.
                 </p>
 
               </div>
@@ -225,6 +343,15 @@ function TaskForm({
             </div>
 
           </div>
+
+
+          {/* ERROR */}
+
+          {errorMessage && (
+            <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+              {errorMessage}
+            </div>
+          )}
 
 
           {/* BUTTONS */}
@@ -242,18 +369,23 @@ function TaskForm({
 
             <button
               type="submit"
-              disabled={isLoading || !title.trim()}
+              disabled={
+                isLoading ||
+                !title.trim()
+              }
               className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-violet-900/20 transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
             >
 
               {isLoading ? (
                 <>
                   <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+
                   AI Analyzing...
                 </>
               ) : (
                 <>
                   <Check size={16} />
+
                   Create Task
                 </>
               )}
