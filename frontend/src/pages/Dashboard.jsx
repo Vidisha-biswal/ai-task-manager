@@ -1,4 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState
+} from "react";
 
 import {
   CheckCircle2,
@@ -6,7 +10,8 @@ import {
   ListTodo,
   AlertCircle,
   TrendingUp,
-  Sparkles
+  Sparkles,
+  SearchX
 } from "lucide-react";
 
 import {
@@ -20,9 +25,10 @@ import Sidebar from "../components/Sidebar";
 import TaskList from "../components/TaskList";
 import TaskForm from "../components/TaskForm";
 import DashboardHeader from "../components/DashboardHeader";
-function Dashboard() {
 
-  const [tasks, setTasks] = useState([]);
+function Dashboard() {
+  const [tasks, setTasks] =
+    useState([]);
 
   const [showTaskForm, setShowTaskForm] =
     useState(false);
@@ -30,49 +36,8 @@ function Dashboard() {
   const [loading, setLoading] =
     useState(true);
 
-
-  /*
-   * LOAD TASKS
-   */
-
-  const loadTasks = async () => {
-
-    try {
-
-      setLoading(true);
-
-      const response = await getTasks();
-
-      console.log(
-        "TASK API RESPONSE:",
-        response.data
-      );
-
-      const loadedTasks =
-        Array.isArray(response.data)
-          ? response.data
-          : Array.isArray(response.data?.tasks)
-          ? response.data.tasks
-          : [];
-
-      setTasks(loadedTasks);
-
-    } catch (error) {
-
-      console.error(
-        "Failed to fetch tasks:",
-        error
-      );
-
-      setTasks([]);
-
-    } finally {
-
-      setLoading(false);
-
-    }
-
-  };
+  const [searchTerm, setSearchTerm] =
+    useState("");
 
 
   /*
@@ -80,91 +45,67 @@ function Dashboard() {
    */
 
   useEffect(() => {
-
     let ignore = false;
 
-    const fetchInitialTasks = async () => {
+    const fetchInitialTasks =
+      async () => {
+        try {
+          setLoading(true);
 
-      try {
+          const response =
+            await getTasks();
 
-        setLoading(true);
+          if (ignore) {
+            return;
+          }
 
-        const response =
-          await getTasks();
-
-        if (ignore) {
-          return;
-        }
-
-        console.log(
-          "INITIAL TASK API RESPONSE:",
-          response.data
-        );
-
-        const loadedTasks =
-          Array.isArray(response.data)
-            ? response.data
-            : Array.isArray(
-                response.data?.tasks
-              )
-            ? response.data.tasks
-            : [];
-
-        setTasks(loadedTasks);
-
-      } catch (error) {
-
-        if (!ignore) {
-
-          console.error(
-            "Failed to fetch tasks:",
-            error
+          console.log(
+            "INITIAL TASK API RESPONSE:",
+            response.data
           );
 
-          setTasks([]);
+          const loadedTasks =
+            Array.isArray(response.data)
+              ? response.data
+              : Array.isArray(
+                  response.data?.tasks
+                )
+              ? response.data.tasks
+              : [];
 
+          setTasks(loadedTasks);
+        } catch (error) {
+          if (!ignore) {
+            console.error(
+              "Failed to fetch tasks:",
+              error
+            );
+
+            setTasks([]);
+          }
+        } finally {
+          if (!ignore) {
+            setLoading(false);
+          }
         }
-
-      } finally {
-
-        if (!ignore) {
-          setLoading(false);
-        }
-
-      }
-
-    };
+      };
 
     fetchInitialTasks();
 
     return () => {
       ignore = true;
     };
-
   }, []);
 
 
   /*
    * CREATE TASK
-   *
-   * TaskForm sends:
-   * {
-   *   title,
-   *   description,
-   *   priority,
-   *   dueDate
-   * }
-   *
-   * The API saves the task and
-   * returns the created task.
    */
 
   const handleAddTask = async (
     taskData
   ) => {
-
     try {
-
       console.log(
         "CREATE TASK REQUEST:",
         taskData
@@ -178,28 +119,27 @@ function Dashboard() {
         response.data
       );
 
-      const newTask = response.data;
+      const newTask =
+        response.data;
 
-      setTasks((currentTasks) => [
-        newTask,
-        ...currentTasks
-      ]);
+      setTasks(
+        (currentTasks) => [
+          newTask,
+          ...currentTasks
+        ]
+      );
 
       setShowTaskForm(false);
 
       return newTask;
-
     } catch (error) {
-
       console.error(
         "Failed to create task:",
         error
       );
 
       throw error;
-
     }
-
   };
 
 
@@ -207,32 +147,31 @@ function Dashboard() {
    * DELETE TASK
    */
 
-  const removeTask = async (id) => {
-
+  const removeTask = async (
+    id
+  ) => {
     try {
-
       await deleteTask(id);
 
-      setTasks((currentTasks) =>
-        currentTasks.filter(
-          (task) => task._id !== id
-        )
+      setTasks(
+        (currentTasks) =>
+          currentTasks.filter(
+            (task) =>
+              task._id !== id
+          )
       );
-
     } catch (error) {
-
       console.error(
         "Failed to delete task:",
         error
       );
 
       alert(
-        error.response?.data?.message ||
-        "Unable to delete task."
+        error.response?.data
+          ?.message ||
+          "Unable to delete task."
       );
-
     }
-
   };
 
 
@@ -244,9 +183,7 @@ function Dashboard() {
     id,
     status
   ) => {
-
     try {
-
       const response =
         await updateTask(
           id,
@@ -258,81 +195,133 @@ function Dashboard() {
         response.data
       );
 
-      setTasks((currentTasks) =>
-        currentTasks.map((task) =>
-          task._id === id
-            ? response.data
-            : task
-        )
+      setTasks(
+        (currentTasks) =>
+          currentTasks.map(
+            (task) =>
+              task._id === id
+                ? response.data
+                : task
+          )
       );
-
     } catch (error) {
-
       console.error(
         "Failed to update task:",
         error
       );
 
       alert(
-        error.response?.data?.message ||
-        "Unable to update task status."
+        error.response?.data
+          ?.message ||
+          "Unable to update task status."
       );
-
     }
-
   };
 
 
   /*
+   * SEARCH TASKS
+   *
+   * Search title and description.
+   * Search is case-insensitive.
+   */
+
+  const filteredTasks =
+    useMemo(() => {
+      const query =
+        searchTerm
+          .trim()
+          .toLowerCase();
+
+      if (!query) {
+        return tasks;
+      }
+
+      return tasks.filter(
+        (task) => {
+          const title =
+            task.title
+              ?.toLowerCase() ||
+            "";
+
+          const description =
+            task.description
+              ?.toLowerCase() ||
+            "";
+
+          return (
+            title.includes(query) ||
+            description.includes(query)
+          );
+        }
+      );
+    }, [
+      tasks,
+      searchTerm
+    ]);
+
+
+  /*
    * TASK ANALYTICS
+   *
+   * Analytics intentionally use
+   * ALL tasks, not filtered tasks.
    */
 
   const analytics = useMemo(() => {
-
-    const total = tasks.length;
+    const total =
+      tasks.length;
 
     const completed =
       tasks.filter(
         (task) =>
-          task.status === "completed"
+          task.status ===
+          "completed"
       ).length;
 
     const inProgress =
       tasks.filter(
         (task) =>
-          task.status === "in-progress"
+          task.status ===
+          "in-progress"
       ).length;
 
     const pending =
       tasks.filter(
         (task) =>
           !task.status ||
-          task.status === "pending"
+          task.status ===
+            "pending"
       ).length;
 
     const highPriority =
       tasks.filter(
         (task) =>
-          task.priority === "high"
+          task.priority ===
+          "high"
       ).length;
 
     const mediumPriority =
       tasks.filter(
         (task) =>
-          task.priority === "medium"
+          task.priority ===
+          "medium"
       ).length;
 
     const lowPriority =
       tasks.filter(
         (task) =>
-          task.priority === "low"
+          task.priority ===
+          "low"
       ).length;
 
     const completionRate =
       total === 0
         ? 0
         : Math.round(
-            (completed / total) * 100
+            (completed /
+              total) *
+              100
           );
 
     return {
@@ -345,7 +334,6 @@ function Dashboard() {
       lowPriority,
       completionRate
     };
-
   }, [tasks]);
 
 
@@ -356,24 +344,29 @@ function Dashboard() {
   const priorityData = [
     {
       label: "High",
-      value: analytics.highPriority,
-      className: "bg-red-500"
+      value:
+        analytics.highPriority,
+      className:
+        "bg-red-500"
     },
     {
       label: "Medium",
-      value: analytics.mediumPriority,
-      className: "bg-yellow-500"
+      value:
+        analytics.mediumPriority,
+      className:
+        "bg-yellow-500"
     },
     {
       label: "Low",
-      value: analytics.lowPriority,
-      className: "bg-emerald-500"
+      value:
+        analytics.lowPriority,
+      className:
+        "bg-emerald-500"
     }
   ];
 
 
   return (
-
     <div className="min-h-screen bg-slate-950 text-white">
 
       {/* SIDEBAR */}
@@ -390,7 +383,13 @@ function Dashboard() {
       <main className="ml-60 min-h-screen p-8">
 
         {/* HEADER */}
-        <DashboardHeader />
+
+        <DashboardHeader
+          searchTerm={searchTerm}
+          onSearchChange={
+            setSearchTerm
+          }
+        />
 
 
         {/* STATISTICS */}
@@ -399,39 +398,52 @@ function Dashboard() {
 
           <StatCard
             title="Total Tasks"
-            value={analytics.total}
+            value={
+              analytics.total
+            }
             icon={
-              <ListTodo size={21} />
+              <ListTodo
+                size={21}
+              />
             }
             description="All your tasks"
           />
 
-
           <StatCard
             title="Completed"
-            value={analytics.completed}
+            value={
+              analytics.completed
+            }
             icon={
-              <CheckCircle2 size={21} />
+              <CheckCircle2
+                size={21}
+              />
             }
             description={`${analytics.completionRate}% completion rate`}
           />
 
-
           <StatCard
             title="In Progress"
-            value={analytics.inProgress}
+            value={
+              analytics.inProgress
+            }
             icon={
-              <Clock3 size={21} />
+              <Clock3
+                size={21}
+              />
             }
             description="Currently working"
           />
 
-
           <StatCard
             title="High Priority"
-            value={analytics.highPriority}
+            value={
+              analytics.highPriority
+            }
             icon={
-              <AlertCircle size={21} />
+              <AlertCircle
+                size={21}
+              />
             }
             description="Needs attention"
           />
@@ -468,7 +480,6 @@ function Dashboard() {
 
             </div>
 
-
             <div className="flex items-center gap-5">
 
               <div
@@ -482,22 +493,30 @@ function Dashboard() {
                 <div className="flex h-20 w-20 items-center justify-center rounded-full bg-slate-900">
 
                   <span className="text-xl font-bold">
-                    {analytics.completionRate}%
+                    {
+                      analytics.completionRate
+                    }%
                   </span>
 
                 </div>
 
               </div>
 
-
               <div className="text-sm">
 
                 <p className="text-slate-300">
-                  {analytics.completed} completed
+                  {
+                    analytics.completed
+                  }{" "}
+                  completed
                 </p>
 
                 <p className="mt-2 text-slate-500">
-                  out of {analytics.total} tasks
+                  out of{" "}
+                  {
+                    analytics.total
+                  }{" "}
+                  tasks
                 </p>
 
               </div>
@@ -523,14 +542,13 @@ function Dashboard() {
 
             </div>
 
-
             <div className="space-y-5">
 
               {priorityData.map(
                 (item) => {
-
                   const percentage =
-                    analytics.total === 0
+                    analytics.total ===
+                    0
                       ? 0
                       : Math.round(
                           (item.value /
@@ -539,23 +557,27 @@ function Dashboard() {
                         );
 
                   return (
-
                     <div
-                      key={item.label}
+                      key={
+                        item.label
+                      }
                     >
 
                       <div className="mb-2 flex justify-between text-sm">
 
                         <span className="text-slate-300">
-                          {item.label}
+                          {
+                            item.label
+                          }
                         </span>
 
                         <span className="text-slate-500">
-                          {item.value}
+                          {
+                            item.value
+                          }
                         </span>
 
                       </div>
-
 
                       <div className="h-2 overflow-hidden rounded-full bg-slate-800">
 
@@ -570,9 +592,7 @@ function Dashboard() {
                       </div>
 
                     </div>
-
                   );
-
                 }
               )}
 
@@ -599,15 +619,18 @@ function Dashboard() {
               </h2>
 
               <p className="mt-1 text-sm text-slate-500">
-                Manage your tasks and stay productive.
+                {searchTerm.trim()
+                  ? `Showing ${filteredTasks.length} matching task${filteredTasks.length === 1 ? "" : "s"}`
+                  : "Manage your tasks and stay productive."}
               </p>
 
             </div>
 
-
             <span className="rounded-full bg-slate-800 px-3 py-1 text-xs text-slate-400">
 
-              {analytics.total} tasks
+              {searchTerm.trim()
+                ? `${filteredTasks.length} of ${analytics.total}`
+                : `${analytics.total} tasks`}
 
             </span>
 
@@ -626,11 +649,50 @@ function Dashboard() {
 
             </div>
 
+          ) : searchTerm.trim() &&
+            filteredTasks.length ===
+              0 ? (
+
+            <div className="py-14 text-center">
+
+              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-800">
+
+                <SearchX
+                  size={22}
+                  className="text-slate-500"
+                />
+
+              </div>
+
+              <h3 className="text-sm font-semibold text-slate-300">
+                No tasks found
+              </h3>
+
+              <p className="mt-1 text-sm text-slate-500">
+                Try a different search term.
+              </p>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setSearchTerm("")
+                }
+                className="mt-4 rounded-xl bg-violet-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-violet-500"
+              >
+                Clear search
+              </button>
+
+            </div>
+
           ) : (
 
             <TaskList
-              tasks={tasks}
-              onDelete={removeTask}
+              tasks={
+                filteredTasks
+              }
+              onDelete={
+                removeTask
+              }
               onStatusChange={
                 handleStatusChange
               }
@@ -656,21 +718,22 @@ function Dashboard() {
 
             </div>
 
-
             <div>
 
               <h3 className="font-semibold">
                 AI Productivity Insight
               </h3>
 
-
               <p className="mt-2 text-sm leading-6 text-slate-400">
 
-                {analytics.total === 0
+                {analytics.total ===
+                0
                   ? "Create a few tasks and AI Task Manager will help you prioritize your work."
-                  : analytics.completionRate >= 70
+                  : analytics.completionRate >=
+                    70
                   ? "Great work! You're maintaining a strong completion rate. Keep focusing on your high-priority tasks."
-                  : analytics.highPriority > 0
+                  : analytics.highPriority >
+                    0
                   ? `You have ${analytics.highPriority} high-priority task${analytics.highPriority > 1 ? "s" : ""}. Consider tackling ${analytics.highPriority > 1 ? "them" : "it"} first to improve your productivity.`
                   : "You have no high-priority tasks right now. Keep working consistently to maintain your productivity."}
 
@@ -688,7 +751,6 @@ function Dashboard() {
       {/* CREATE TASK MODAL */}
 
       {showTaskForm && (
-
         <TaskForm
           onClose={() =>
             setShowTaskForm(false)
@@ -697,13 +759,10 @@ function Dashboard() {
             handleAddTask
           }
         />
-
       )}
 
     </div>
-
   );
-
 }
 
 
@@ -717,21 +776,16 @@ function StatCard({
   icon,
   description
 }) {
-
   return (
-
     <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 transition hover:border-slate-700">
 
       <div className="mb-4 flex items-center justify-between">
 
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-800 text-violet-400">
-
           {icon}
-
         </div>
 
       </div>
-
 
       <p className="text-sm text-slate-500">
         {title}
@@ -746,9 +800,7 @@ function StatCard({
       </p>
 
     </div>
-
   );
-
 }
 
 export default Dashboard;
