@@ -208,22 +208,23 @@ function DashboardHeader({
 
   /*
    * =========================================================
-   * INITIAL NOTIFICATION LOAD
+   * INITIAL NOTIFICATION LOAD + POLLING
    * =========================================================
+   *
+   * Initial load gets the current notification state.
+   *
+   * Polling every 60 seconds allows:
+   *
+   * - Due-soon notifications
+   * - Overdue notifications
+   * - New notifications from server
+   *
+   * to appear automatically.
    */
 
   useEffect(() => {
 
     loadNotifications();
-
-    /*
-     * Refresh every 60 seconds.
-     *
-     * This allows due-soon and
-     * overdue notifications to
-     * appear without refreshing
-     * the browser.
-     */
 
     const interval =
       setInterval(
@@ -295,18 +296,37 @@ function DashboardHeader({
    * =========================================================
    * TOGGLE NOTIFICATIONS
    * =========================================================
+   *
+   * IMPORTANT:
+   *
+   * Whenever the bell is clicked,
+   * fetch the latest notifications first.
+   *
+   * This prevents the user from waiting
+   * for the 60-second polling interval.
    */
 
   const handleNotificationClick =
-    () => {
+    async () => {
 
-      setShowNotifications(
-        (current) =>
-          !current
-      );
+      const willOpen =
+        !showNotifications;
+
 
       setShowAccountMenu(
         false
+      );
+
+
+      if (willOpen) {
+
+        await loadNotifications();
+
+      }
+
+
+      setShowNotifications(
+        willOpen
       );
     };
 
@@ -658,6 +678,9 @@ function DashboardHeader({
               }
               className="relative rounded-xl border border-slate-700 bg-slate-900 p-3 text-slate-400 transition hover:text-white"
               aria-label="Notifications"
+              aria-expanded={
+                showNotifications
+              }
             >
 
               <Bell size={19} />
