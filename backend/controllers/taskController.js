@@ -1,11 +1,24 @@
-const mongoose = require("mongoose");
-const Task = require("../models/Task");
+const Task =
+  require("../models/Task");
+
+const {
+  createNotification
+} =
+  require("./notificationController");
+
 
 /*
+ * =========================================================
  * CREATE TASK
+ * =========================================================
  */
-const createTask = async (req, res) => {
+
+const createTask = async (
+  req,
+  res
+) => {
   try {
+
     const {
       title,
       description,
@@ -13,116 +26,203 @@ const createTask = async (req, res) => {
       dueDate
     } = req.body;
 
-    const task = await Task.create({
+
+    /*
+     * TITLE VALIDATION
+     */
+
+    if (
+      !title ||
+      !title.trim()
+    ) {
+      return res.status(400).json({
+        message:
+          "Task title is required"
+      });
+    }
+
+
+    /*
+     * PRIORITY VALIDATION
+     */
+
+    const allowedPriorities = [
+      "low",
+      "medium",
+      "high"
+    ];
+
+    const finalPriority =
+      priority &&
+      allowedPriorities.includes(
+        priority.toLowerCase()
+      )
+        ? priority.toLowerCase()
+        : "medium";
+
+
+    /*
+     * CREATE TASK
+     */
+
+    const task =
+      await Task.create({
+        user: req.user._id,
+        title: title.trim(),
+        description:
+          description
+            ? description.trim()
+            : "",
+        priority:
+          finalPriority,
+        dueDate:
+          dueDate || null
+      });
+
+
+    /*
+     * CREATE NOTIFICATION
+     */
+
+    await createNotification({
       user: req.user._id,
-      title: title.trim(),
-      description: description?.trim() || "",
-      priority: priority || "medium",
-      dueDate: dueDate || null
+      type: "task-created",
+      title: "Task created",
+      message:
+        `"${task.title}" was added to your tasks.`,
+      task: task._id
     });
 
-    return res.status(201).json(task);
+
+    return res
+      .status(201)
+      .json(task);
 
   } catch (error) {
-    console.error("Create task error:", error);
+
+    console.error(
+      "Create task error:",
+      error
+    );
 
     return res.status(500).json({
-      message: "Unable to create task."
+      message:
+        "Server error: " +
+        error.message
     });
   }
 };
 
 
 /*
- * GET ALL TASKS
+ * =========================================================
+ * GET TASKS
+ * =========================================================
  */
-const getTasks = async (req, res) => {
+
+const getTasks = async (
+  req,
+  res
+) => {
   try {
-    const tasks = await Task.find({
-      user: req.user._id
-    })
-      .sort({
+
+    const tasks =
+      await Task.find({
+        user: req.user._id
+      }).sort({
         createdAt: -1
-      })
-      .lean();
+      });
 
-    return res.status(200).json(tasks);
+
+    return res.json(tasks);
 
   } catch (error) {
-    console.error("Get tasks error:", error);
+
+    console.error(
+      "Get tasks error:",
+      error
+    );
 
     return res.status(500).json({
-      message: "Unable to fetch tasks."
+      message:
+        "Server error: " +
+        error.message
     });
   }
 };
 
 
 /*
- * GET SINGLE TASK
+ * =========================================================
+ * GET TASK BY ID
+ * =========================================================
  */
-const getTaskById = async (req, res) => {
+
+const getTaskById = async (
+  req,
+  res
+) => {
   try {
-    const { id } = req.params;
 
-    /*
-     * Prevent MongoDB CastError for invalid IDs.
-     */
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({
-        message: "Invalid task ID."
+    const task =
+      await Task.findOne({
+        _id: req.params.id,
+        user: req.user._id
       });
-    }
 
-    const task = await Task.findOne({
-      _id: id,
-      user: req.user._id
-    });
 
     if (!task) {
       return res.status(404).json({
-        message: "Task not found."
+        message:
+          "Task not found"
       });
     }
 
-    return res.status(200).json(task);
+
+    return res.json(task);
 
   } catch (error) {
-    console.error("Get task error:", error);
+
+    console.error(
+      "Get task error:",
+      error
+    );
 
     return res.status(500).json({
-      message: "Unable to fetch task."
+      message:
+        "Server error: " +
+        error.message
     });
   }
 };
 
 
 /*
+ * =========================================================
  * UPDATE TASK
+ * =========================================================
  */
-const updateTask = async (req, res) => {
+
+const updateTask = async (
+  req,
+  res
+) => {
   try {
-    const { id } = req.params;
 
-    /*
-     * Validate MongoDB ObjectId.
-     */
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({
-        message: "Invalid task ID."
+    const task =
+      await Task.findOne({
+        _id: req.params.id,
+        user: req.user._id
       });
-    }
 
-    const task = await Task.findOne({
-      _id: id,
-      user: req.user._id
-    });
 
     if (!task) {
       return res.status(404).json({
-        message: "Task not found."
+        message:
+          "Task not found"
       });
     }
+
 
     const {
       title,
@@ -134,112 +234,249 @@ const updateTask = async (req, res) => {
 
 
     /*
+     * KEEP ORIGINAL STATUS
+     *
+     * Needed to determine whether
+     * the task has just been completed.
+     */
+
+    const previousStatus =
+      task.status;
+
+
+    /*
      * TITLE
      */
-    if (title !== undefined) {
-      task.title = title.trim();
+
+    if (
+      title !== undefined
+    ) {
+
+      if (!title.trim()) {
+        return res.status(400).json({
+          message:
+            "Task title cannot be empty"
+        });
+      }
+
+      task.title =
+        title.trim();
     }
 
 
     /*
      * DESCRIPTION
      */
-    if (description !== undefined) {
-      task.description = description.trim();
+
+    if (
+      description !== undefined
+    ) {
+
+      task.description =
+        description
+          ? description.trim()
+          : "";
     }
 
 
     /*
      * PRIORITY
      */
-    if (priority !== undefined) {
-      task.priority = priority;
+
+    if (
+      priority !== undefined
+    ) {
+
+      const allowedPriorities = [
+        "low",
+        "medium",
+        "high"
+      ];
+
+      const normalizedPriority =
+        priority.toLowerCase();
+
+
+      if (
+        !allowedPriorities.includes(
+          normalizedPriority
+        )
+      ) {
+        return res.status(400).json({
+          message:
+            "Priority must be low, medium, or high"
+        });
+      }
+
+
+      task.priority =
+        normalizedPriority;
     }
 
 
     /*
      * DUE DATE
      */
-    if (dueDate !== undefined) {
-      task.dueDate = dueDate || null;
+
+    if (
+      dueDate !== undefined
+    ) {
+
+      task.dueDate =
+        dueDate || null;
     }
 
 
     /*
      * STATUS
      */
-    if (status !== undefined) {
-      task.status = status;
 
-      if (status === "completed") {
-        /*
-         * Only set completedAt when task becomes completed.
-         */
+    if (
+      status !== undefined
+    ) {
+
+      const allowedStatuses = [
+        "pending",
+        "in-progress",
+        "completed"
+      ];
+
+
+      if (
+        !allowedStatuses.includes(
+          status
+        )
+      ) {
+        return res.status(400).json({
+          message:
+            "Status must be pending, in-progress, or completed"
+        });
+      }
+
+
+      task.status =
+        status;
+
+
+      /*
+       * COMPLETION TIMESTAMP
+       */
+
+      if (
+        status === "completed"
+      ) {
+
         if (!task.completedAt) {
-          task.completedAt = new Date();
+          task.completedAt =
+            new Date();
         }
+
       } else {
-        /*
-         * If task is moved back from completed,
-         * remove completion timestamp.
-         */
-        task.completedAt = null;
+
+        task.completedAt =
+          null;
       }
     }
 
 
-    const updatedTask = await task.save();
+    /*
+     * SAVE UPDATED TASK
+     */
 
-    return res.status(200).json(updatedTask);
+    const updatedTask =
+      await task.save();
+
+
+    /*
+     * COMPLETION NOTIFICATION
+     *
+     * Only notify when the task
+     * changes from a non-completed
+     * state to completed.
+     */
+
+    if (
+      previousStatus !== "completed" &&
+      updatedTask.status === "completed"
+    ) {
+
+      await createNotification({
+        user: req.user._id,
+        type: "task-completed",
+        title: "Task completed",
+        message:
+          `Great job! "${updatedTask.title}" has been completed.`,
+        task: updatedTask._id
+      });
+    }
+
+
+    return res.json(
+      updatedTask
+    );
 
   } catch (error) {
-    console.error("Update task error:", error);
+
+    console.error(
+      "Update task error:",
+      error
+    );
 
     return res.status(500).json({
-      message: "Unable to update task."
+      message:
+        "Server error: " +
+        error.message
     });
   }
 };
 
 
 /*
+ * =========================================================
  * DELETE TASK
+ * =========================================================
  */
-const deleteTask = async (req, res) => {
+
+const deleteTask = async (
+  req,
+  res
+) => {
   try {
-    const { id } = req.params;
 
-    /*
-     * Validate MongoDB ObjectId.
-     */
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({
-        message: "Invalid task ID."
+    const task =
+      await Task.findOne({
+        _id: req.params.id,
+        user: req.user._id
       });
-    }
 
-    const task = await Task.findOne({
-      _id: id,
-      user: req.user._id
-    });
 
     if (!task) {
       return res.status(404).json({
-        message: "Task not found."
+        message:
+          "Task not found"
       });
     }
 
+
     await task.deleteOne();
 
-    return res.status(200).json({
-      message: "Task deleted successfully."
+
+    return res.json({
+      message:
+        "Task deleted successfully"
     });
 
   } catch (error) {
-    console.error("Delete task error:", error);
+
+    console.error(
+      "Delete task error:",
+      error
+    );
 
     return res.status(500).json({
-      message: "Unable to delete task."
+      message:
+        "Server error: " +
+        error.message
     });
   }
 };

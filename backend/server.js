@@ -109,6 +109,11 @@ app.use(
   require("./routes/aiRoutes")
 );
 
+app.use(
+  "/api/notifications",
+  require("./routes/notificationRoutes")
+);
+
 /*
  * ================================
  * ROOT
